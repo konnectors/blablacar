@@ -11,7 +11,11 @@ const {
   log,
   errors
 } = require('cozy-konnector-libs')
-let request = requestFactory({ cheerio: false, debug: false, jar: true })
+let request = requestFactory({
+  cheerio: false,
+  // debug: false,
+  jar: true
+})
 const moment = require('moment')
 moment.locale('fr')
 const pdf = require('pdfjs')
