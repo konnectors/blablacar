@@ -31,7 +31,9 @@
     "cozyPublish": "cozy-app-publish --token $REGISTRY_TOKEN --build-commit $(git rev-parse ${DEPLOY_BRANCH:-build})"
   },
   "dependencies": {
-    "cozy-konnector-libs": "4.1.7"
+    "cozy-konnector-libs": "4.1.7",
+    "moment": "2.22.0",
+    "pdfjs": "2.0.0-alpha.6"
   },
   "devDependencies": {
     "copy-webpack-plugin": "4.5.1",
