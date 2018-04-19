@@ -230,8 +230,12 @@ function authenticate(email, password) {
       rememberMe: true,
       grant_type: 'password'
     }
-  }).catch(err => {
-    if (err.statusCode === 401) throw new Error(errors.LOGIN_FAILED)
-    else throw err
   })
+    .then(() => {
+      log('info', 'Successfully logged in')
+    })
+    .catch(err => {
+      if (err.statusCode === 401) throw new Error(errors.LOGIN_FAILED)
+      else throw err
+    })
 }
