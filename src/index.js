@@ -30,7 +30,7 @@ function start(fields) {
     .then(list => getDatas(list))
     .then(bills =>
       saveBills(bills, fields, {
-        identifiers: 'blablacar',
+        identifiers: ['blablacar'],
         contentType: 'application/pdf'
       })
     )
@@ -85,8 +85,8 @@ async function getDatas(list) {
       filestream: stream._doc,
       filename: filename,
       vendor: 'BlaBlacar',
-      amount: parseFloat(tripAmount.replace('€', '').replace(',', '.')),
-      // TODOlucst CHECK REAL AMOUNT and SIGN
+      amount: parseFloat(billInfo['amount'].replace('€', '').replace(',', '.')),
+      isRefund: billInfo['isRefund'],
       date: date.toDate(),
       currency: 'EUR'
     })
