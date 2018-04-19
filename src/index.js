@@ -41,7 +41,7 @@ async function getDatas(list) {
   const bills = []
   for (let billInfo of list) {
     const date = moment(billInfo['date'], 'L')
-    $ = await request(baseUrl + billInfo['link'])
+    const $ = await request(baseUrl + billInfo['link'])
     const trip = $('h2[class=u-left]', 'section[class="main-block"]')
       .text()
       .trim()
@@ -70,7 +70,7 @@ async function getDatas(list) {
     }
     filename = filename + billInfo['amount'] + '.pdf'
     log('debug', 'Generating pdf ' + filename)
-    stream = generatePdf(
+    const stream = generatePdf(
       trip,
       billInfo['date'],
       start,
@@ -151,7 +151,7 @@ function addLine(doc, text1, text2) {
 
 async function getHistory() {
   log('info', 'Getting travels history...')
-  travels = []
+  let travels = []
   let $ = await request(paymentsUrl)
   log('debug', 'Parsing main page')
   travels = travels.concat(parseHistory($))
