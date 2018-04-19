@@ -5,7 +5,7 @@ const {
   log,
   errors
 } = require('cozy-konnector-libs')
-let request = requestFactory({ cheerio: false, debug: true, jar: true })
+let request = requestFactory({ cheerio: false, debug: false, jar: true })
 const moment = require('moment')
 moment.locale('fr')
 const pdf = require('pdfjs')
@@ -38,12 +38,10 @@ function start(fields) {
 
 async function getDatas(list) {
   log('Getting datas and generating pdfs...')
-  log('debug', list)
   const bills = []
   for (let billInfo of list) {
     const date = moment(billInfo['date'], 'L')
     $ = await request(baseUrl + billInfo['link'])
-
     const trip = $('h2[class=u-left]', 'section[class="main-block"]')
       .text()
       .trim()
@@ -58,7 +56,7 @@ async function getDatas(list) {
       .eq(2)
       .text()
       .trim()
-    const amount = $('div[class=row-content]')
+    const tripAmount = $('div[class=row-content]')
       .eq(3)
       .text()
       .replace(/\s/g, '')
@@ -66,28 +64,29 @@ async function getDatas(list) {
       .text()
       .trim()
       .replace(/\s\s+/g, ' ')
-
+    let filename = date.format('YYYY-MM-DD') + '_' + trip + '_'
+    if (billInfo['isRefund']) {
+      filename = filename + 'Remboursement_'
+    }
+    filename = filename + billInfo['amount'] + '.pdf'
+    log('debug', 'Generating pdf ' + filename)
     stream = generatePdf(
       trip,
       billInfo['date'],
       start,
       places,
-      amount,
+      tripAmount,
       driver,
-      billInfo['link']
+      billInfo['link'],
+      billInfo['isRefund'],
+      billInfo['amount']
     )
     bills.push({
       filestream: stream._doc,
-      filename: (
-        date.format('YYYY-MM-DD') +
-        '_' +
-        trip +
-        '_' +
-        amount +
-        '.pdf'
-      ).replace(' ', ''),
+      filename: filename,
       vendor: 'BlaBlacar',
-      amount: parseFloat(amount.replace('€', '').replace(',', '.')),
+      amount: parseFloat(tripAmount.replace('€', '').replace(',', '.')),
+      // TODOlucst CHECK REAL AMOUNT and SIGN
       date: date.toDate(),
       currency: 'EUR'
     })
@@ -95,19 +94,38 @@ async function getDatas(list) {
   return bills
 }
 
-function generatePdf(trip, date, start, places, amount, driver, link) {
+function generatePdf(
+  trip,
+  date,
+  start,
+  places,
+  tripAmount,
+  driver,
+  link,
+  isRefund,
+  amount
+) {
+  let title = ''
+  if (isRefund) {
+    title = 'Informations de remboursement de voyage Blablacar.fr'
+  } else {
+    title = 'Informations de voyage Blablacar.fr'
+  }
   var doc = new pdf.Document({ font: helveticaFont, fontSize: 12 })
   doc
     .cell({ paddingBottom: 0.5 * pdf.cm })
     .text()
-    .add('Informations de voyage Blablacar.fr', {
+    .add(title, {
       font: helveticaBoldFont,
       fontSize: 14
     })
   addLine(doc, 'Trajet : ', trip)
   addLine(doc, 'Date : ', date)
   addLine(doc, 'Départ : ', start)
-  addLine(doc, 'Prix : ', amount)
+  addLine(doc, 'Prix : ', tripAmount)
+  if (isRefund) {
+    addLine(doc, 'Remboursement : ', amount)
+  }
   addLine(doc, 'Passagers : ', places)
   addLine(doc, 'Conducteur : ', driver)
   doc
@@ -146,11 +164,11 @@ async function getHistory() {
     } catch (error) {
       if (error.statusCode === 404) {
         again = false
-        log('debug', 'Page' + i + 'do not exist')
+        log('debug', 'Page ' + i + ' do not exist')
         continue
       } else throw error
     }
-    log('debug', 'Page' + i + ' found')
+    log('debug', 'Page ' + i + ' found')
     travels = travels.concat(parseHistory($))
     i++
   }
@@ -170,7 +188,20 @@ function parseHistory($) {
         .first()
         .text()
         .trim()
-      return { date: date, link: link }
+      const isRefund = Boolean(
+        $(el)
+          .find('td')
+          .eq(2)
+          .text()
+          .match('Remboursement')
+      )
+      const amount = $(el)
+        .find('td')
+        .eq(3)
+        .text()
+        .replace(/\s\s+/g, '')
+        .replace(/\(|\)/g, '')
+      return { date: date, link: link, isRefund: isRefund, amount: amount }
     })
   )
 }
