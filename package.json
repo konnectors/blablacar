@@ -1,12 +1,12 @@
 {
-  "name": "cozy-konnector-template",
+  "name": "blablacar",
   "version": "1.0.0",
-  "description": "",
+  "description": "Connecteur for Blablacar.fr",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/konnectors/cozy-konnector-template.git"
+    "url": "git+https://github.com/konnectors/blablacar.git"
   },
-  "keywords": [],
+  "keywords": ["blablacar", "voyage"],
   "author": "Cozy Cloud",
   "license": "AGPL-3.0",
   "main": "./src/index.js",
@@ -27,7 +27,7 @@
     "build": "webpack",
     "precommit": "yarn lint",
     "lint": "eslint --fix .",
-    "deploy": "git-directory-deploy --directory build/ --branch ${DEPLOY_BRANCH:-build} --repo=${DEPLOY_REPOSITORY:-https://$GITHUB_TOKEN@github.com/konnectors/cozy-konnector-template.git}",
+    "deploy": "git-directory-deploy --directory build/ --branch ${DEPLOY_BRANCH:-build} --repo=${DEPLOY_REPOSITORY:-https://$GITHUB_TOKEN@github.com/konnectors/blablacar.git}",
     "cozyPublish": "cozy-app-publish --token $REGISTRY_TOKEN --build-commit $(git rev-parse ${DEPLOY_BRANCH:-build})"
   },
   "dependencies": {
