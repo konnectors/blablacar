@@ -1,7 +1,7 @@
 {
   "name": "blablacar",
-  "version": "1.0.0",
-  "description": "Connecteur for Blablacar.fr",
+  "version": "1.0.1",
+  "description": "Connector for Blablacar.fr",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/konnectors/blablacar.git"
