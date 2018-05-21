@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "name": "Connector blablacar",
+  "version": "1.0.2",
+  "name": "Blablacar",
   "type": "konnector",
   "language": "node",
   "icon": "icon.svg",
