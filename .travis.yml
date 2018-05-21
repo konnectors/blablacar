@@ -1,39 +1,41 @@
 language: node_js
 node_js:
-  - '8'
+- '8'
 env:
   global:
-    # cozy-bot GITHUB_TOKEN
-    # to generate yours : travis encrypt GITHUB_TOKEN=<your_GITHUB_TOKEN>
-    - secure: "clxPZSR+Jd8WHGjvvxKiq2Yj9ZMClPwGf+IrADgkfpisGjNsSswkr1MuR7zB1455UBnP99kwptdN9c2Qsrv+uaN2IpE3l4E126NLtlgaJKJ7eNlFpqgNJVHRsv6sQc5WI0dReh76DFaqmg0dpmhnjCF3MqKKCFVIqIEHF3ANzMHn55Qj/i6Dmg2W/Rovwr4oWCkxoYbiQYYjBrfkIkXOZIjZf8+wiKJgPbZwH3+5ezZ0h0g8GsdoeIOhsjUUWFaS4j5CkyfDl6mpEbQTy146fqdv9hXHqtK9ADIKAHGLl8cBkfAECsxQKmRXkDAYZGGJwLJPf6e8smESBl32qYGPvIYh1HJDlKeacl1UZxr6lOoGIT8jDHhs/qAVsfXR/i8gTEXoUHmxvy3kFl11yrqq0/oFxcAULphFPZeUdmvyFPIPvkPEUz0Orsp1IKHGRFU99sMo5dStnOdJWzrbT01EWhsK9GRUftUjIGltPQ175uato0PUiIJpb4KfMo++WCvcDhB/dH5eXEd93WIG46aXNPNXBVo/wQNIZXWxgi9Z9FaVYwLjaSDwjgXq3aOS1Xvqc91pNB3IB+O7TLS7tovd18Bta604yEgbpgq8MF3GWVoGTfzPWgedxC37fIk1NSpULJ9jsDyuAdgbcwIIWkQ8JbNGkcdkV6Aiyhyx2wtjWQc="
-    # Cozy REGISTRY_TOKEN
-    - secure: "hXwYx2mgdEBUl1eVkPGwCMYWSdu3mli2UWz4u6LIAjk1nCx63y+LaMuQRQIL2WQNrVUAvNS+fKw+1tJw2dkjZj1S5otCVoBcTaTwJw/N8aOQmfeoPF/yHwERaw+w1j2KLRAgdHZABfCRds+x2GW8t7v9eEFjF6039SbpaWBHBzlVe+0dOj4CckDcP1f0ytBE4hXhdg3aVKmEtyCtLl9LenUmXiduD2kXRvj2aLut8iqozTJgGnLZt37IAclSZZz8EgeK+E/l2yNYL9B+e+duOqrBmxLDnt/RFOJWwnsMPU69gM4gBztTvpdjT5tIhw8CD1jTWUaiBAXY5bMK8CDlzj4Y5RTTVyaCTGB9coTUL678USb4huYDa6885Trmf4Ree7lsePwcpKT+5nopWqTu/uDUx1y4UCm5/P9TZ/FD9DYzcFhU0wSm/Z8M+VIgMeOf242CSLaiMJtiia4/PC65A3fJ3IiJzqtfkhdj9jeUfD9VpGpeNcuTryFmaMDvxzH94ET+YqKpVSfb7L08eKmo2VLAc2LNsJ7A/mrgmvb+4ztxsvKlR/giT5pxZBxQrn5zhhiZvSKNfeDDtYwQOgE/qIzRFSkLvMFGrpPOOvuPysYhgARmZJQ0NfbDa8AfejMXglBoGxUJKzgcKmhNtOyqioTiyk9PlZLuo8ahNLFkPxA="
+  - GH_USER_EMAIL="travis@example.org"
+  - GH_USER_NAME="cozy-bot"
+  - DEPLOY_REPOSITORY="git@github.com:konnectors/blablacar.git"
+  - secure: SpRDc/XxjrCJuvHj/xmL2k5C8uBzMSP9OL42N2cx6KoLnUdFOIXftjUDzAXVvGP9iiEWVe34l3cRMQAQ3cTPNWGpU1lBcQtK3T3bDVDxai0hfhH8qLKGjRjEPjNMYXmPum89TuFX6vIYzScgyvz/KUDfbMAYTOJhHSeIphFdVKmnT5V8uXO5R5i+rYcNRRROKsrOeq/d10yWRu1cCD9N4/G7cKIjfRkWzmrBXqQXMbP16Bhdg7DuJ5YBN3G+t2blpdLTTSAmSqiYMsjC4B4lFStRo0+jsvduYfkbarKLE1FSD2lTwRCosTtykvha5MlHs8cnQ+HrVPKnry7D1GFL6XoLChQflZN1tRLov4tf0OmvDPbMMkjT2t1wxGMgXCgZHsGAGh29x5Y+HvWBVAx5wLzOd2fjSLgYkuCLg2A60Rd/S+/lY8+ZDWozQX3Qy7nYO7JLbhISkTGCTFeuoFCp661xABKgbnOuv2evSeWFob8WJUIbLuZj6agbFVZIRv+RzX9O55bGjwGRtCaLsjjT7OsgyPGiib9PUuBo/krbAeVpt94wKHA3MS41BYAQyJLn1FEYahBl70x+9qNp/P6OiY7hWcGYp/fnK5l44EJRNB2qJbYhFXuncSukzdf5K+WTHk7UL5DjK1yzCBD5smS8qJ+pe6iC3NFCr0GJjTOrkAc=
 cache:
   yarn: true
   directories:
-    - node_modules
+  - node_modules
 script:
-  - yarn lint
-  - yarn build
+- yarn lint
+- yarn build
 deploy:
-  # publish dev versions
-  - provider: script
-    repo: konnectors/blablacar
-    skip-cleanup: true
-    script: DEPLOY_BRANCH=build && yarn deploy && yarn cozyPublish
-    on:
-      branch: master
-  # publish on latest branch (will be removed when collect will use only the registry
-  - provider: script
-    repo: konnectors/blablacar
-    skip-cleanup: true
-    script: DEPLOY_BRANCH=latest && yarn deploy
-    on:
-      branch: prod
-  # publish stable versions and beta versions based on tags
-  - provider: script
-    repo: konnectors/blablacar
-    skip-cleanup: true
-    script: DEPLOY_BRANCH=build && yarn deploy && yarn cozyPublish
-    on:
-      tags: true
+- provider: script
+  skip-cleanup: true
+  script: DEPLOY_BRANCH=build yarn deploy && yarn cozyPublish
+  on:
+    branch: master
+- provider: script
+  skip-cleanup: true
+  script: DEPLOY_BRANCH=latest yarn deploy
+  on:
+    branch: prod
+- provider: script
+  skip-cleanup: true
+  script: DEPLOY_BRANCH=build yarn deploy && yarn cozyPublish
+  on:
+    tags: true
+before_install:
+- openssl aes-256-cbc -K $encrypted_135bd4ae8fcb_key -iv $encrypted_135bd4ae8fcb_iv
+  -in github_deploy_key.enc -out /tmp/github_deploy_key -d
+- eval "$(ssh-agent -s)"
+- chmod 600 /tmp/github_deploy_key
+- ssh-add /tmp/github_deploy_key
+after_deploy:
+- rm /tmp/github_deploy_key
+- ssh-add -D
