@@ -2141,7 +2141,39 @@ cozy-jobs-cli@1.1.0:
     opn "^5.1.0"
     regenerator-runtime "^0.11.1"
 
-cozy-konnector-libs@4.2.0, cozy-konnector-libs@^4.2.0:
+cozy-konnector-libs@4.3.0:
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/cozy-konnector-libs/-/cozy-konnector-libs-4.3.0.tgz#1ce1cc45e8710ee6aee556603b43129f0895c1d8"
+  dependencies:
+    babel-cli "^6.26.0"
+    babel-plugin-transform-object-rest-spread "^6.26.0"
+    bluebird "^3.5.0"
+    bluebird-retry "^0.11.0"
+    btoa "^1.1.2"
+    chalk "^2.3.2"
+    cheerio "^1.0.0-rc.2"
+    commander "^2.12.2"
+    core-js "2.5.6"
+    cozy-client-js "^0.9.0"
+    cozy-logger "^1.1.6"
+    date-fns "^1.29.0"
+    geco "^0.11.1"
+    isomorphic-fetch "^2.2.1"
+    jest "^22.0.0"
+    jsdoc-to-markdown "^4.0.1"
+    lodash "4.17.10"
+    moment "^2.18.1"
+    opn "^5.1.0"
+    pdfjs "^2.0.0-alpha.8"
+    raven "2.6.2"
+    regenerator-runtime "^0.11.0"
+    replay "^2.1.2"
+    request "2.87.0"
+    request-debug "^0.2.0"
+    request-promise "^4.2.1"
+    uuid "^3.1.0"
+
+cozy-konnector-libs@^4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/cozy-konnector-libs/-/cozy-konnector-libs-4.2.0.tgz#0bdb971ddc902d2a01c889c95c0cd095f2734f5e"
   dependencies:
@@ -6348,7 +6380,7 @@ pbkdf2@^3.0.3:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
-pdfjs@2.0.0-alpha.8:
+pdfjs@2.0.0-alpha.8, pdfjs@^2.0.0-alpha.8:
   version "2.0.0-alpha.8"
   resolved "https://registry.yarnpkg.com/pdfjs/-/pdfjs-2.0.0-alpha.8.tgz#47754b862602fc6a1435a08c1ea718d36906447e"
   dependencies:
@@ -6770,6 +6802,16 @@ randomfill@^1.0.3:
   dependencies:
     randombytes "^2.0.5"
     safe-buffer "^5.1.0"
+
+raven@2.6.2:
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/raven/-/raven-2.6.2.tgz#c92f30890e2dfcd15258d184e43e39326e58032e"
+  dependencies:
+    cookie "0.3.1"
+    md5 "^2.2.1"
+    stack-trace "0.0.10"
+    timed-out "4.0.1"
+    uuid "3.0.0"
 
 raven@^2.4.0:
   version "2.4.2"
@@ -7197,6 +7239,31 @@ request@2.86.0:
     form-data "~2.3.1"
     har-validator "~5.0.3"
     hawk "~6.0.2"
+    http-signature "~1.2.0"
+    is-typedarray "~1.0.0"
+    isstream "~0.1.2"
+    json-stringify-safe "~5.0.1"
+    mime-types "~2.1.17"
+    oauth-sign "~0.8.2"
+    performance-now "^2.1.0"
+    qs "~6.5.1"
+    safe-buffer "^5.1.1"
+    tough-cookie "~2.3.3"
+    tunnel-agent "^0.6.0"
+    uuid "^3.1.0"
+
+request@2.87.0:
+  version "2.87.0"
+  resolved "https://registry.yarnpkg.com/request/-/request-2.87.0.tgz#32f00235cd08d482b4d0d68db93a829c0ed5756e"
+  dependencies:
+    aws-sign2 "~0.7.0"
+    aws4 "^1.6.0"
+    caseless "~0.12.0"
+    combined-stream "~1.0.5"
+    extend "~3.0.1"
+    forever-agent "~0.6.1"
+    form-data "~2.3.1"
+    har-validator "~5.0.3"
     http-signature "~1.2.0"
     is-typedarray "~1.0.0"
     isstream "~0.1.2"
@@ -7682,13 +7749,13 @@ ssri@^5.2.4:
   dependencies:
     safe-buffer "^5.1.1"
 
+stack-trace@0.0.10, stack-trace@0.0.x:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/stack-trace/-/stack-trace-0.0.10.tgz#547c70b347e8d32b4e108ea1a2a159e5fdde19c0"
+
 stack-trace@0.0.9:
   version "0.0.9"
   resolved "https://registry.yarnpkg.com/stack-trace/-/stack-trace-0.0.9.tgz#a8f6eaeca90674c333e7c43953f275b451510695"
-
-stack-trace@0.0.x:
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/stack-trace/-/stack-trace-0.0.10.tgz#547c70b347e8d32b4e108ea1a2a159e5fdde19c0"
 
 stack-utils@^1.0.1:
   version "1.0.1"
