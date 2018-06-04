@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "cozy-konnector-libs": "4.3.0",
-    "moment": "2.22.1",
+    "moment": "2.22.2",
     "pdfjs": "2.0.0-alpha.8"
   },
   "devDependencies": {
@@ -45,7 +45,7 @@
     "git-directory-deploy": "1.5.1",
     "husky": "0.14.3",
     "konitor": "0.8.3",
-    "webpack": "4.9.1",
+    "webpack": "4.10.2",
     "webpack-cli": "2.1.4"
   }
 }
