@@ -26,7 +26,6 @@
   "data_types": [
     "bill"
   ],
-  "screenshots": [ "screenshots/screenshot1.png" ],
   "permissions": {
     "bank operations": {
       "type": "io.cozy.bank.operations"
