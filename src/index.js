@@ -19,10 +19,8 @@ let request = requestFactory({
 const moment = require('moment')
 moment.locale('fr')
 const pdf = require('pdfjs')
-const helveticaFont = new pdf.Font(require('pdfjs/font/Helvetica.json'))
-const helveticaBoldFont = new pdf.Font(
-  require('pdfjs/font/Helvetica-Bold.json')
-)
+const helveticaFont = require('pdfjs/font/Helvetica')
+const helveticaBoldFont = require('pdfjs/font/Helvetica-Bold')
 
 const baseUrl = 'https://www.blablacar.fr'
 const loginUrl = baseUrl + '/secure-token'
@@ -236,6 +234,7 @@ function authenticate(email, password) {
     })
     .catch(err => {
       if (err.statusCode === 401) throw new Error(errors.LOGIN_FAILED)
+      else if (err.statusCode === 403) throw new Error('UNEXPECTED_CAPTCHA')
       else throw err
     })
 }
