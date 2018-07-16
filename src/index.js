@@ -12,9 +12,25 @@ const {
   errors
 } = require('cozy-konnector-libs')
 let request = requestFactory({
-  cheerio: false,
-  // debug: false,
-  jar: true
+  cheerio: true,
+  debug: false,
+  jar: true,
+  headers: {
+    'user-agent':
+      'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0',
+    'x-locale': 'fr_FR',
+    'x-client': 'SPA',
+    'x-currency': 'EUR',
+    origin: 'https://www.blablacar.fr',
+    'accept-encoding': 'gzip, deflate, br',
+    'accept-language': 'fr_FR',
+    'content-type': 'application/json',
+    referer: 'https://www.blablacar.fr/login/email',
+    accept: 'application/json',
+    authority: 'www.blablacar.fr',
+    'cache-control': 'no-cache',
+    pragma: 'no-cache'
+  }
 })
 const moment = require('moment')
 moment.locale('fr')
@@ -31,9 +47,6 @@ module.exports = new BaseKonnector(start)
 function start(fields) {
   log('info', 'Authenticating ...')
   return authenticate(fields.email, fields.password)
-    .then(() => {
-      request = requestFactory({ cheerio: true })
-    })
     .then(getHistory)
     .then(list => getDatas(list))
     .then(bills =>
@@ -218,10 +231,8 @@ function authenticate(email, password) {
   return request({
     method: 'POST',
     uri: loginUrl,
-    headers: {
-      'content-type': 'application/json'
-    },
     json: true,
+    cheerio: false, // No cheerio here
     body: {
       login: email,
       password: password,
