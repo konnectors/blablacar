@@ -1,12 +1,15 @@
 {
   "name": "blablacar",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "description": "Connector for Blablacar.fr",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/konnectors/blablacar.git"
   },
-  "keywords": ["blablacar", "voyage"],
+  "keywords": [
+    "blablacar",
+    "voyage"
+  ],
   "author": "Cozy Cloud",
   "license": "AGPL-3.0",
   "main": "./src/index.js",
