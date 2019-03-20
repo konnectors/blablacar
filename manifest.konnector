@@ -5,7 +5,7 @@
   "language": "node",
   "icon": "icon.svg",
   "slug": "blablacar",
-  "source": "git://github.com/konnectors/blablacar.git",
+  "source": "git@github.com:konnectors/blablacar.git",
   "editor": "Cozy",
   "vendor_link": "https://www.blablacar.fr",
   "categories": [
