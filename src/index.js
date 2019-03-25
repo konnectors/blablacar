@@ -17,7 +17,7 @@ let request = requestFactory({
   jar: true,
   headers: {
     'user-agent':
-      'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0',
+      'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:62.0) Gecko/20100101 Firefox/62.0 Cozycloud',
     'x-locale': 'fr_FR',
     'x-client': 'SPA',
     'x-currency': 'EUR',
