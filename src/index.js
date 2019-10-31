@@ -13,16 +13,16 @@ const {
 } = require('cozy-konnector-libs')
 let request = requestFactory({
   cheerio: true,
-  debug: false,
+  // debug: true,
   jar: true,
+  gzip: true,
   headers: {
     'user-agent':
-      'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:62.0) Gecko/20100101 Firefox/62.0 Cozycloud',
+      'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:62.0) Gecko/20100101 Firefox/62.0',
     'x-locale': 'fr_FR',
     'x-client': 'SPA',
     'x-currency': 'EUR',
     origin: 'https://www.blablacar.fr',
-    'accept-encoding': 'gzip, deflate, br',
     'accept-language': 'fr_FR',
     'content-type': 'application/json',
     referer: 'https://www.blablacar.fr/login/email',
@@ -63,28 +63,28 @@ async function getDatas(list) {
   for (let billInfo of list) {
     const date = moment(billInfo['date'], 'L')
     const $ = await request(baseUrl + billInfo['link'])
-    const trip = $('h2[class=u-left]', 'section[class="main-block"]')
-      .text()
-      .trim()
-      .replace('→', '-')
-      .replace(/\s/g, '')
-    const start = $('div[class=row-content]')
-      .eq(1)
-      .text()
-      .trim()
-      .replace(/\s\s+/g, ' ')
-    const places = $('div[class=row-content]')
-      .eq(2)
-      .text()
-      .trim()
-    const tripAmount = $('div[class=row-content]')
-      .eq(3)
-      .text()
-      .replace(/\s/g, '')
-    const driver = $('a', 'div[class=driver-info]')
-      .text()
-      .trim()
-      .replace(/\s\s+/g, ' ')
+    const json = $.html()
+      .split('\n')
+      .filter(line => line.includes('window.INIT_STORE='))
+      .pop()
+      .split('</script><script>')
+      .shift()
+      .match(/<script>window.INIT_STORE=(.*);$/)[1]
+    const info = Object.values(JSON.parse(json).entities.ridePlans).pop()
+
+    const trip =
+      info.rideItinerary.waypoints.shift().place.city +
+      '-' +
+      info.rideItinerary.waypoints.pop().place.city
+    const start = info.rideItinerary.departureDate
+      .split('T')
+      .pop()
+      .split(':')
+      .slice(0, 2)
+      .join(':')
+    const places = info.seatsCount
+    const tripAmount = info.displayedPrice.price.formatted_price
+    const driver = info.driver.name
     let filename = date.format('YYYY-MM-DD') + '_' + trip + '_'
     if (billInfo['isRefund']) {
       filename = filename + 'Remboursement_'
@@ -103,7 +103,7 @@ async function getDatas(list) {
       billInfo['amount']
     )
     bills.push({
-      filestream: stream._doc,
+      filestream: stream,
       filename: filename,
       vendor: 'BlaBlacar',
       amount: parseFloat(billInfo['amount'].replace('€', '').replace(',', '.')),
@@ -227,19 +227,20 @@ function parseHistory($) {
   )
 }
 
-function authenticate(email, password) {
-  return request({
-    method: 'POST',
-    uri: loginUrl,
-    json: true,
-    cheerio: false, // No cheerio here
-    body: {
-      login: email,
-      password: password,
-      rememberMe: true,
-      grant_type: 'password'
-    }
-  })
+async function authenticate(email, password) {
+  await request.get('https://www.blablacar.fr/login/email')
+  return await request
+    .post({
+      uri: loginUrl,
+      json: true,
+      cheerio: false, // No cheerio here
+      body: {
+        login: email,
+        password: password,
+        rememberMe: true,
+        grant_type: 'password'
+      }
+    })
     .then(() => {
       log('info', 'Successfully logged in')
     })
