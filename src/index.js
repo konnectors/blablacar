@@ -4,6 +4,12 @@ process.env.SENTRY_DSN =
   process.env.SENTRY_DSN ||
   'https://1f98f0e094c2490399eadbf36e6a63a1:08b6804412f546c4bf4863f3613d19c5@sentry.cozycloud.cc/38'
 
+const secrets = JSON.parse(process.env.COZY_PARAMETERS || '{}').secret
+if (secrets.proxyUrl) {
+  process.env.http_proxy = secrets.proxyUrl
+  process.env.https_proxy = secrets.proxyUrl
+}
+
 const {
   BaseKonnector,
   requestFactory,
