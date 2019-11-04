@@ -5,7 +5,7 @@ process.env.SENTRY_DSN =
   'https://1f98f0e094c2490399eadbf36e6a63a1:08b6804412f546c4bf4863f3613d19c5@sentry.cozycloud.cc/38'
 
 const secrets = JSON.parse(process.env.COZY_PARAMETERS || '{}').secret
-if (secrets.proxyUrl) {
+if (secrets && secrets.proxyUrl) {
   process.env.http_proxy = secrets.proxyUrl
   process.env.https_proxy = secrets.proxyUrl
 }
@@ -234,12 +234,13 @@ function parseHistory($) {
 }
 
 async function authenticate(email, password) {
-  await request.get('https://www.blablacar.fr/login/email')
-  return await request
-    .post({
-      uri: loginUrl,
+  try {
+    await request.get('https://www.blablacar.fr/login/email')
+    const requestJson = requestFactory({
       json: true,
-      cheerio: false, // No cheerio here
+      cheerio: false // No cheerio here
+    })
+    await requestJson.post(loginUrl, {
       body: {
         login: email,
         password: password,
@@ -247,12 +248,10 @@ async function authenticate(email, password) {
         grant_type: 'password'
       }
     })
-    .then(() => {
-      log('info', 'Successfully logged in')
-    })
-    .catch(err => {
-      if (err.statusCode === 401) throw new Error(errors.LOGIN_FAILED)
-      else if (err.statusCode === 403) throw new Error('UNEXPECTED_CAPTCHA')
-      else throw err
-    })
+    log('info', 'Successfully logged in')
+  } catch (err) {
+    if (err.statusCode === 401) throw new Error(errors.LOGIN_FAILED)
+    else if (err.statusCode === 403) throw new Error('UNEXPECTED_CAPTCHA')
+    else throw err
+  }
 }
