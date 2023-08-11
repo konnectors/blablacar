@@ -6,13 +6,9 @@ Minilog.enable('blablacarCCC')
 
 const baseUrl = 'https://www.blablacar.fr'
 const mailLoginUrl = 'https://www.blablacar.fr/login/email'
-const carSearchUrl = 'https://www.blablacar.fr/search-car-sharing'
 
 let personnalInfos = []
-// Here we need to override the fetch function to intercept the bills data sent by the website
-// when we reach the bills page. Scraping is extremly tricky to achieve as there is no explicit selectors
-// we could use to be resilient to potential changes.
-// Stocker la référence à la fonction d'origine fetch
+// Interception needed to retrieve personnal infos data
 const fetchOriginal = window.fetch
 
 // Remplacer la fonction fetch par une nouvelle fonction
@@ -68,10 +64,11 @@ class BlablacarContentScript extends ContentScript {
   }
 
   async ensureAuthenticated({ account }) {
-    this.bridge.addEventListener('workerEvent', this.onWorkerEvent.bind(this))
     this.log('info', '🤖 ensureAuthenticated')
+    this.bridge.addEventListener('workerEvent', this.onWorkerEvent.bind(this))
     await this.navigateToBaseUrl()
     if (!account) {
+      this.log('info', "No account detected, ensuring we're logged out")
       await this.ensureNotAuthenticated()
     }
     const authenticated = await this.runInWorker('checkAuthenticated')
@@ -146,7 +143,7 @@ class BlablacarContentScript extends ContentScript {
   }
 
   async showLoginFormAndWaitForAuthentication() {
-    log.debug('showLoginFormAndWaitForAuthentication start')
+    this.log('info', 'showLoginFormAndWaitForAuthentication start')
     await this.setWorkerState({ visible: true })
     await this.runInWorkerUntilTrue({
       method: 'waitForAuthenticated'
@@ -173,7 +170,7 @@ class BlablacarContentScript extends ContentScript {
     }
   }
 
-  async fetch(context) {
+  async fetch() {
     this.log('info', '🤖 fetch')
     if (this.store.userCredentials) {
       await this.saveCredentials(this.store.userCredentials)
@@ -181,6 +178,33 @@ class BlablacarContentScript extends ContentScript {
     await this.saveIdentity({ contact: this.store.userIdentity })
     await this.waitForElementInWorker('[pause]')
   }
+
+  // We cannot make any form of autoLogin, website is protecting itself from using JS to fill and validate the loginForm
+  // We cannot pre-fill the form either, website is emptying all inputs if it detects it has not been filled "by hand" and verified the events sent when typing/simulating
+  // We're keeping this around in case we find a way to use it later
+
+  // async tryAutoLogin(credentials) {
+  //   this.log('info', 'tryAutologin starts')
+  //   await this.autoLogin(credentials)
+  //   await this.runInWorkerUntilTrue({ method: 'waitForAuthenticated' })
+  // }
+
+  // async autoLogin(credentials) {
+  //   this.log('info', 'autoLogin starts')
+  //   await Promise.all([
+  //     this.waitForElementInWorker('input[name="login"]'),
+  //     this.waitForElementInWorker('input[name="password"]'),
+  //     this.waitForElementInWorker('button[type="submit"]')
+  //   ])
+  //   await this.runInWorker('fillText', 'input[name="login"]', credentials.email)
+  //   await this.runInWorker(
+  //     'fillText',
+  //     'input[name="password"]',
+  //     credentials.password
+  //   )
+  //   await this.waitForElementInWorker('[pause-autoLogin]')
+  //   await this.runInWorker('click', 'button[type="submit"]')
+  // }
 
   async waitFor2FACode() {
     this.log('info', 'waitFor2FACode starts')
@@ -214,7 +238,6 @@ class BlablacarContentScript extends ContentScript {
       () => {
         if (personnalInfos.length > 0) {
           this.log('info', 'interception succesfull, continue')
-          this.log('info', `personnalInfos : ${JSON.stringify(personnalInfos)}`)
           return true
         } else {
           return false
