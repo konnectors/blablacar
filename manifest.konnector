@@ -1,5 +1,5 @@
 {
-  "version": "1.3.0",
+  "version": "2.0.0",
   "name": "Blablacar",
   "type": "konnector",
   "language": "node",
@@ -7,63 +7,41 @@
   "slug": "blablacar",
   "source": "git@github.com:konnectors/blablacar.git",
   "editor": "Cozy",
-  "vendor_link": "https://www.blablacar.fr",
+  "vendor_link": "https://www.blablacar.fr/",
   "categories": [
     "transport"
   ],
-  "fields": {
-    "email": {
-      "type": "email"
-    },
-    "password": {
-      "type": "password"
-    },
-    "advancedFields": {
-      "folderPath": {
-        "advanced": true,
-        "isRequired": false
-      }
-    }
-  },
-  "time_interval": [
-    0,
-    23
+  "fields": { },
+  "clientSide": true,
+  "langs": [
+    "fr"
   ],
-  "data_types": [
-    "bill"
+  "folders": [
+    {
+      "defaultDir": "$administrative/$konnector/$account"
+    }
   ],
   "permissions": {
-    "bank operations": {
-      "type": "io.cozy.bank.operations"
-    },
     "bills": {
       "type": "io.cozy.bills"
     },
     "files": {
       "type": "io.cozy.files"
     },
-    "accounts": {
-      "type": "io.cozy.accounts",
-      "verbs": [
-        "GET"
-      ]
+    "carbon_copy": {
+      "type": "io.cozy.certified.carbon_copy"
+    },
+    "identities": {
+      "type": "io.cozy.identities"
     }
   },
-  "developer": {
-    "name": "Cozy Cloud",
-    "url": "https://cozy.io"
-  },
-  "langs": [
-    "fr",
-    "en"
-  ],
   "locales": {
     "fr": {
-      "short_description": "Récupère vos données de blablacar",
-      "long_description": "Récupère vos données de blablacar",
+      "short_description": "Récupère vos factures Blablacar.",
+      "long_description": "Récupère vos factures Blablacar.",
       "permissions": {
-        "bank operations": {
-          "description": "Utilisé pour relier les factures à des operations bancaires"
+        "carboncopy": {
+          "description": "Utilisé pour certifier que vos fichiers sont copie conforme avec les documents d'origine"
         },
         "bills": {
           "description": "Utilisé pour sauver les données des factures"
@@ -71,28 +49,36 @@
         "files": {
           "description": "Utilisé pour sauvegarder les factures"
         },
-        "accounts": {
-          "description": "Utilisé pour obtenir les données du compte"
+        "identities": {
+          "description": "Utilisé pour sauvegarder l'identité de l'utilisateur"
         }
       }
     },
     "en": {
-      "short_description": "Fetches your data from blablacar",
-      "long_description": "Fetches your data from blablacar",
+      "short_description": "Fetch a list of Blablacar invoices.",
+      "long_description": "Fetch a list of Blablacar invoices.",
       "permissions": {
-        "bank operations": {
-          "description": "Required to link bank operations to bills"
+        "carboncopy": {
+          "description": "Required for carbon copy documents"
         },
         "bills": {
           "description": "Required to save the bills data"
         },
         "files": {
-          "description": "Required to save the file documents"
+          "description": "Required to save the bills"
         },
-        "accounts": {
-          "description": "Required to get the account's data"
+        "identities": {
+          "description": "Required to save the user identity"
         }
       }
     }
-  }
+  },
+  "qualification_labels": [
+    "transport_invoice"
+  ],
+  "features": [
+    "METADATA_DEDUP",
+    "CARBON_COPY",
+    "DOC_QUALIFICATION_V2"
+  ]
 }

@@ -1,257 +1,295 @@
-// Force sentry DSN into environment variables
-// In the future, will be set by the stack
-process.env.SENTRY_DSN =
-  process.env.SENTRY_DSN ||
-  'https://1f98f0e094c2490399eadbf36e6a63a1:08b6804412f546c4bf4863f3613d19c5@sentry.cozycloud.cc/38'
-
-const secrets = JSON.parse(process.env.COZY_PARAMETERS || '{}').secret
-if (secrets && secrets.proxyUrl) {
-  process.env.http_proxy = secrets.proxyUrl
-  process.env.https_proxy = secrets.proxyUrl
-}
-
-const {
-  BaseKonnector,
-  requestFactory,
-  saveBills,
-  log,
-  errors
-} = require('cozy-konnector-libs')
-let request = requestFactory({
-  cheerio: true,
-  // debug: true,
-  jar: true,
-  gzip: true,
-  headers: {
-    'user-agent':
-      'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:62.0) Gecko/20100101 Firefox/62.0',
-    'x-locale': 'fr_FR',
-    'x-client': 'SPA',
-    'x-currency': 'EUR',
-    origin: 'https://www.blablacar.fr',
-    'accept-language': 'fr_FR',
-    'content-type': 'application/json',
-    referer: 'https://www.blablacar.fr/login/email',
-    accept: 'application/json',
-    authority: 'www.blablacar.fr',
-    'cache-control': 'no-cache',
-    pragma: 'no-cache'
-  }
-})
-const moment = require('moment')
-moment.locale('fr')
-const pdf = require('pdfjs')
-const helveticaFont = require('pdfjs/font/Helvetica')
-const helveticaBoldFont = require('pdfjs/font/Helvetica-Bold')
+import { ContentScript } from 'cozy-clisk/dist/contentscript'
+import Minilog from '@cozy/minilog'
+import waitFor, { TimeoutError } from 'p-wait-for'
+const log = Minilog('ContentScript')
+Minilog.enable('blablacarCCC')
 
 const baseUrl = 'https://www.blablacar.fr'
-const loginUrl = baseUrl + '/secure-token'
-const paymentsUrl = baseUrl + '/dashboard/account/payments-done'
+const mailLoginUrl = 'https://www.blablacar.fr/login/email'
 
-module.exports = new BaseKonnector(start)
+let personnalInfos = []
+// Interception needed to retrieve personnal infos data
+const fetchOriginal = window.fetch
 
-function start(fields) {
-  log('info', 'Authenticating ...')
-  return authenticate(fields.email, fields.password)
-    .then(getHistory)
-    .then(list => getDatas(list))
-    .then(bills =>
-      saveBills(bills, fields, {
-        identifiers: ['blablacar'],
-        contentType: 'application/pdf'
+// Remplacer la fonction fetch par une nouvelle fonction
+window.fetch = async (...args) => {
+  const response = await fetchOriginal(...args)
+  if (typeof args[0] === 'string' && args[0].includes('/api/v2/me')) {
+    await response
+      .clone()
+      .json()
+      .then(body => {
+        personnalInfos.push(body)
+        return response
       })
-    )
-}
-
-async function getDatas(list) {
-  log('Getting datas and generating pdfs...')
-  const bills = []
-  for (let billInfo of list) {
-    const date = moment(billInfo['date'], 'L')
-    const $ = await request(baseUrl + billInfo['link'])
-    const json = $.html()
-      .split('\n')
-      .filter(line => line.includes('window.INIT_STORE='))
-      .pop()
-      .split('</script><script>')
-      .shift()
-      .match(/<script>window.INIT_STORE=(.*);$/)[1]
-    const info = Object.values(JSON.parse(json).entities.ridePlans).pop()
-
-    const trip =
-      info.rideItinerary.waypoints.shift().place.city +
-      '-' +
-      info.rideItinerary.waypoints.pop().place.city
-    const start = info.rideItinerary.departureDate
-      .split('T')
-      .pop()
-      .split(':')
-      .slice(0, 2)
-      .join(':')
-    const places = info.seatsCount
-    const tripAmount = info.displayedPrice.price.formatted_price
-    const driver = info.driver.name
-    let filename = date.format('YYYY-MM-DD') + '_' + trip + '_'
-    if (billInfo['isRefund']) {
-      filename = filename + 'Remboursement_'
-    }
-    filename = filename + billInfo['amount'] + '.pdf'
-    log('debug', 'Generating pdf ' + filename)
-    const stream = generatePdf(
-      trip,
-      billInfo['date'],
-      start,
-      places,
-      tripAmount,
-      driver,
-      billInfo['link'],
-      billInfo['isRefund'],
-      billInfo['amount']
-    )
-    bills.push({
-      filestream: stream,
-      filename: filename,
-      vendor: 'BlaBlacar',
-      amount: parseFloat(billInfo['amount'].replace('€', '').replace(',', '.')),
-      isRefund: billInfo['isRefund'],
-      date: date.toDate(),
-      currency: 'EUR'
-    })
+      .catch(err => {
+        // eslint-disable-next-line no-console
+        console.log(err)
+        return response
+      })
   }
-  return bills
+  return response
 }
 
-function generatePdf(
-  trip,
-  date,
-  start,
-  places,
-  tripAmount,
-  driver,
-  link,
-  isRefund,
-  amount
-) {
-  let title = ''
-  if (isRefund) {
-    title = 'Informations de remboursement de voyage Blablacar.fr'
-  } else {
-    title = 'Informations de voyage Blablacar.fr'
-  }
-  var doc = new pdf.Document({ font: helveticaFont, fontSize: 12 })
-  doc
-    .cell({ paddingBottom: 0.5 * pdf.cm })
-    .text()
-    .add(title, {
-      font: helveticaBoldFont,
-      fontSize: 14
-    })
-  addLine(doc, 'Trajet : ', trip)
-  addLine(doc, 'Date : ', date)
-  addLine(doc, 'Départ : ', start)
-  addLine(doc, 'Prix : ', tripAmount)
-  if (isRefund) {
-    addLine(doc, 'Remboursement : ', amount)
-  }
-  addLine(doc, 'Passagers : ', places)
-  addLine(doc, 'Conducteur : ', driver)
-  doc
-    .cell({ paddingBottom: 0.5 * pdf.cm })
-    .text()
-    .add('Données originales : ', { font: helveticaBoldFont })
-    .add(baseUrl + link, { link: baseUrl + link })
-  doc
-    .cell({ paddingBottom: 0.5 * pdf.cm })
-    .text()
-    .add('Généré automatiquement par le connecteur cozy blablacar.')
-  doc.end()
-  return doc
-}
-
-function addLine(doc, text1, text2) {
-  return doc
-    .cell({ paddingBottom: 0.5 * pdf.cm })
-    .text()
-    .add(text1, { font: helveticaBoldFont })
-    .add(text2)
-}
-
-async function getHistory() {
-  log('info', 'Getting travels history...')
-  let travels = []
-  let $ = await request(paymentsUrl)
-  log('debug', 'Parsing main page')
-  travels = travels.concat(parseHistory($))
-  // Crawl next webpage until we catch a not found
-  let i = 2
-  let again = true
-  while (again) {
-    try {
-      $ = await request(paymentsUrl + '/' + i)
-    } catch (error) {
-      if (error.statusCode === 404) {
-        again = false
-        log('debug', 'Page ' + i + ' do not exist')
-        continue
-      } else throw error
-    }
-    log('debug', 'Page ' + i + ' found')
-    travels = travels.concat(parseHistory($))
-    i++
+class BlablacarContentScript extends ContentScript {
+  async navigateToLoginForm() {
+    this.log('info', '🤖 navigateToLoginForm')
+    await this.goto(mailLoginUrl)
+    await Promise.race([
+      this.waitForElementInWorker('input[name="login"]'),
+      this.waitForElementInWorker('form[role="search"]')
+    ])
   }
 
-  log('info', travels)
-  return travels
-}
+  async navigateToBaseUrl() {
+    this.log('info', '🤖 navigateToBaseUrl')
+    await this.goto(baseUrl)
+    await Promise.race([
+      this.waitForElementInWorker('a[href="/login"]'),
+      this.waitForElementInWorker('#logout')
+    ])
+  }
 
-function parseHistory($) {
-  return Array.from(
-    $('tr', 'tbody').map((index, el) => {
-      const link = $(el)
-        .find('a')
-        .attr('href')
-      const date = $(el)
-        .find('td')
-        .first()
-        .text()
-        .trim()
-      const isRefund = Boolean(
-        $(el)
-          .find('td')
-          .eq(2)
-          .text()
-          .match('Remboursement')
+  onWorkerEvent(event, payload) {
+    if (event === 'loginSubmit') {
+      this.log('info', 'received loginSubmit, blocking user interactions')
+      this.blockWorkerInteractions()
+    } else if (event === 'loginError') {
+      this.log(
+        'info',
+        'received loginError, unblocking user interactions: ' + payload?.msg
       )
-      const amount = $(el)
-        .find('td')
-        .eq(3)
-        .text()
-        .replace(/\s\s+/g, '')
-        .replace(/\(|\)/g, '')
-      return { date: date, link: link, isRefund: isRefund, amount: amount }
-    })
-  )
-}
+      this.unblockWorkerInteractions()
+    }
+  }
 
-async function authenticate(email, password) {
-  try {
-    await request.get('https://www.blablacar.fr/login/email')
-    const requestJson = requestFactory({
-      json: true,
-      cheerio: false // No cheerio here
+  async ensureAuthenticated({ account }) {
+    this.log('info', '🤖 ensureAuthenticated')
+    this.bridge.addEventListener('workerEvent', this.onWorkerEvent.bind(this))
+    await this.navigateToBaseUrl()
+    if (!account) {
+      this.log('info', "No account detected, ensuring we're logged out")
+      await this.ensureNotAuthenticated()
+    }
+    const authenticated = await this.runInWorker('checkAuthenticated')
+    if (!authenticated) {
+      this.log('info', 'Not authenticated')
+      await this.navigateToLoginForm()
+      await this.showLoginFormAndWaitForAuthentication()
+    }
+    const ask2FA = await this.isElementInWorker('input[inputmode="numeric"]')
+    if (ask2FA) {
+      await this.setWorkerState({ visible: true })
+      await this.runInWorkerUntilTrue({ method: 'waitFor2FACode' })
+      await this.setWorkerState({ visible: false })
+    }
+    this.unblockWorkerInteractions()
+    return true
+  }
+
+  async ensureNotAuthenticated() {
+    this.log('info', '🤖 ensureNotAuthenticated')
+    const authenticated = await this.runInWorker('checkAuthenticated')
+    if (!authenticated) {
+      return true
+    }
+    await this.clickAndWait('#logout', 'a[href="/login"]')
+    return true
+  }
+
+  onWorkerReady() {
+    const button = document.querySelector('input[type=submit]')
+    if (button) {
+      button.addEventListener('click', () =>
+        this.bridge.emit('workerEvent', 'loginSubmit')
+      )
+    }
+    const error = document.querySelector('.error')
+    if (error) {
+      this.bridge.emit('workerEvent', 'loginError', { msg: error.innerHTML })
+    }
+  }
+
+  async checkAuthenticated() {
+    this.log('info', 'checkAuthenticated starts')
+    const passwordField = document.querySelector('input[name="password"]')
+    const loginField = document.querySelector('input[name="login"]')
+    if (passwordField && loginField) {
+      const userCredentials = await this.findAndSendCredentials.bind(this)(
+        loginField,
+        passwordField
+      )
+      this.log('info', "Sending user's credentials to Pilot")
+      this.sendToPilot({ userCredentials })
+    }
+
+    if (document.querySelector('input[inputmode="numeric"]')) {
+      this.log('info', 'Auth detected - 2FA needed')
+      return true
+    }
+
+    return Boolean(document.querySelector('#logout'))
+  }
+
+  async findAndSendCredentials(loginField, passwordField) {
+    this.log('info', 'findAndSendCredentials starts')
+    let userLogin = loginField.value
+    let userPassword = passwordField.value
+    const userCredentials = {
+      email: userLogin,
+      password: userPassword
+    }
+    return userCredentials
+  }
+
+  async showLoginFormAndWaitForAuthentication() {
+    this.log('info', 'showLoginFormAndWaitForAuthentication start')
+    await this.setWorkerState({ visible: true })
+    await this.runInWorkerUntilTrue({
+      method: 'waitForAuthenticated'
     })
-    await requestJson.post(loginUrl, {
-      body: {
-        login: email,
-        password: password,
-        rememberMe: true,
-        grant_type: 'password'
+    await this.setWorkerState({ visible: false })
+  }
+
+  async getUserDataFromWebsite() {
+    this.log('info', '🤖 getUserDataFromWebsite')
+    await this.clickAndWait(
+      'a[href="/dashboard/profile/menu"]',
+      '#content-about_you'
+    )
+    await this.runInWorkerUntilTrue({ method: 'checkInterception' })
+    await this.runInWorker('getIdentity')
+    if (!this.store.userIdentity?.email) {
+      throw new Error(
+        'getUserDataFromWebsite: Could not find an email in user identity'
+      )
+    } else {
+      return {
+        sourceAccountIdentifier: this.store.userIdentity.email
       }
-    })
-    log('info', 'Successfully logged in')
-  } catch (err) {
-    if (err.statusCode === 401) throw new Error(errors.LOGIN_FAILED)
-    else if (err.statusCode === 403) throw new Error('UNEXPECTED_CAPTCHA')
-    else throw err
+    }
+  }
+
+  async fetch(context) {
+    this.log('info', '🤖 fetch')
+    if (this.store.userCredentials) {
+      await this.saveCredentials(this.store.userCredentials)
+    }
+    await this.saveIdentity({ contact: this.store.userIdentity })
+    await this.waitForElementInWorker('[pause]')
+  }
+
+  // We cannot make any form of autoLogin, website is protecting itself from using JS to fill and validate the loginForm
+  // We cannot pre-fill the form either, website is emptying all inputs if it detects it has not been filled "by hand" and verified the events sent when typing/simulating
+  // We're keeping this around in case we find a way to use it later
+
+  // async tryAutoLogin(credentials) {
+  //   this.log('info', 'tryAutologin starts')
+  //   await this.autoLogin(credentials)
+  //   await this.runInWorkerUntilTrue({ method: 'waitForAuthenticated' })
+  // }
+
+  // async autoLogin(credentials) {
+  //   this.log('info', 'autoLogin starts')
+  //   await Promise.all([
+  //     this.waitForElementInWorker('input[name="login"]'),
+  //     this.waitForElementInWorker('input[name="password"]'),
+  //     this.waitForElementInWorker('button[type="submit"]')
+  //   ])
+  //   await this.runInWorker('fillText', 'input[name="login"]', credentials.email)
+  //   await this.runInWorker(
+  //     'fillText',
+  //     'input[name="password"]',
+  //     credentials.password
+  //   )
+  //   await this.waitForElementInWorker('[pause-autoLogin]')
+  //   await this.runInWorker('click', 'button[type="submit"]')
+  // }
+
+  async waitFor2FACode() {
+    this.log('info', 'waitFor2FACode starts')
+    await waitFor(
+      () => {
+        const searchForm = document.querySelector('form[role="search"]')
+        if (searchForm) {
+          this.log('info', 'Logged in, continue')
+          return true
+        } else {
+          return false
+        }
+      },
+      {
+        interval: 1000,
+        timeout: {
+          // It has been agreed we're waiting for Infinity when a user's input is needed
+          milliseconds: Infinity,
+          message: new TimeoutError(
+            'waitFor2FACode timed out, can be because the user never filled the code or the wanted selector is missing'
+          )
+        }
+      }
+    )
+    return true
+  }
+
+  async checkInterception() {
+    this.log('info', 'checkInterception starts')
+    await waitFor(
+      () => {
+        if (personnalInfos.length > 0) {
+          this.log('info', 'interception succesfull, continue')
+          return true
+        } else {
+          return false
+        }
+      },
+      {
+        interval: 1000,
+        timeout: {
+          milliseconds: 10000,
+          message: new TimeoutError('checkInterception timed out after 10 sec')
+        }
+      }
+    )
+    return true
+  }
+
+  async getIdentity() {
+    this.log('info', 'getIdentity starts')
+    const infos = personnalInfos[0]
+    const email = infos.email
+    const givenName = infos.firstname
+    const familyName = infos.lastname
+    const birthDate = infos.birthdate
+    const phoneNumber = infos.phone.national_formatted_number.replace(/ /g, '')
+    const userIdentity = {
+      email,
+      phone: [
+        {
+          // Here we assume it can only be a mobile number as they need to send you an sms for validation code
+          type: 'mobile',
+          number: phoneNumber
+        }
+      ],
+      name: {
+        givenName,
+        familyName
+      },
+      birthDate
+    }
+    await this.sendToPilot({ userIdentity })
   }
 }
+
+const connector = new BlablacarContentScript()
+connector
+  .init({
+    additionalExposedMethodsNames: [
+      'waitFor2FACode',
+      'checkInterception',
+      'getIdentity'
+    ]
+  })
+  .catch(err => {
+    log.warn(err)
+  })
